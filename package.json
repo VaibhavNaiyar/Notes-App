@@ -10,7 +10,11 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "prisma:docker": "yarn workspace @repo/db prisma migrate dev --skip-seed && yarn workspace @repo/db prisma db seed",
+    "db:migrate": "yarn workspace @repo/db db:migrate",
+    "db:seed": "yarn workspace @repo/db db:seed",
+    "db:generate": "yarn workspace @repo/db db:generate",
+    "db:studio": "yarn workspace @repo/db db:studio",
+    "db:setup": "yarn db:migrate && yarn db:seed",
     "prepare": "husky install"
   },
   "devDependencies": {

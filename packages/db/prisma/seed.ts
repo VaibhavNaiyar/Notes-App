@@ -1,4 +1,4 @@
-import { PrismaClient, ProblemType, TrackType, ContentType } from "@prisma/client";
+import { PrismaClient, ProblemType, TrackType, ContentType, PostType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -124,6 +124,22 @@ async function main() {
       { courseId: course.id, contentId: videoLeaf.id, order: 2 },
     ],
     skipDuplicates: true,
+  });
+
+  // ── Seed admin user (no OAuth — useful for local dev) ─────────────────────
+  // Password: "admin123" — change immediately in any real environment
+  const { hash } = await import("bcryptjs");
+  const hashedPassword = await hash("admin123", 10);
+
+  await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: {},
+    create: {
+      email: "admin@example.com",
+      name: "Admin",
+      password: hashedPassword,
+      admin: true,
+    },
   });
 
   console.log("Seed complete.");
