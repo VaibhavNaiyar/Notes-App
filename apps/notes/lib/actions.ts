@@ -110,3 +110,42 @@ export async function markTrackIndexed(trackId: string) {
   await requireAdmin();
   await prisma.track.update({ where: { id: trackId }, data: { inSearch: true } });
 }
+
+// ── AI Semantic Search ─────────────────────────────────────────────────────────
+
+export async function indexTrack(trackId: string) {
+  await requireAdmin();
+
+  const track = await prisma.track.findUnique({
+    where: { id: trackId },
+    include: {
+      problems: {
+        include: { problem: true },
+        orderBy: { sortingOrder: "asc" },
+      },
+    },
+  });
+
+  if (!track) throw new Error("Track not found");
+
+  const { insertData } = await import("./search");
+
+  const problems = track.problems.map((tp) => ({
+    id: tp.problem.id,
+    title: tp.problem.title,
+    notionDocId: tp.problem.notionDocId,
+  }));
+
+  const count = await insertData(track.id, track.title, track.image, problems);
+
+  await prisma.track.update({ where: { id: trackId }, data: { inSearch: true } });
+
+  return count;
+}
+
+export async function semanticSearch(query: string) {
+  if (!query.trim()) return [];
+
+  const { getSearchResults } = await import("./search");
+  return getSearchResults(query);
+}
