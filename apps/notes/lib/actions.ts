@@ -2,11 +2,22 @@
 
 import { prisma } from "@repo/db/client";
 import { getSession, requireAdmin, requireAuth } from "@repo/auth";
+import { cacheGet, cacheSet, cacheDel } from "@repo/cache";
 import { revalidatePath } from "next/cache";
 
 // ── Tracks ─────────────────────────────────────────────────────────────────────
 
 export async function getTracks() {
+  const CACHE_KEY = "tracks:all";
+  const cached = await cacheGet<Awaited<ReturnType<typeof _fetchTracks>>>(CACHE_KEY);
+  if (cached) return cached;
+
+  const data = await _fetchTracks();
+  await cacheSet(CACHE_KEY, data);
+  return data;
+}
+
+function _fetchTracks() {
   return prisma.track.findMany({
     where: { hidden: false },
     include: {
@@ -69,14 +80,12 @@ export async function createTrack(data: {
 }) {
   await requireAdmin();
 
-  // Upsert category
   const category = await prisma.categories.upsert({
-    where: { id: data.categoryName }, // use name as id for simplicity
+    where: { id: data.categoryName },
     update: {},
     create: { id: data.categoryName, category: data.categoryName },
   });
 
-  // Create track + problems in one transaction
   await prisma.$transaction(async (tx) => {
     const track = await tx.track.create({
       data: {
@@ -103,12 +112,14 @@ export async function createTrack(data: {
     }
   });
 
+  await cacheDel("tracks:all");
   revalidatePath("/");
 }
 
 export async function markTrackIndexed(trackId: string) {
   await requireAdmin();
   await prisma.track.update({ where: { id: trackId }, data: { inSearch: true } });
+  await cacheDel("tracks:all");
 }
 
 // ── AI Semantic Search ─────────────────────────────────────────────────────────
@@ -139,6 +150,7 @@ export async function indexTrack(trackId: string) {
   const count = await insertData(track.id, track.title, track.image, problems);
 
   await prisma.track.update({ where: { id: trackId }, data: { inSearch: true } });
+  await cacheDel("tracks:all");
 
   return count;
 }

@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.3.0",
     "@qdrant/js-client-rest": "^1.8.0",
     "@repo/auth": "*",
+    "@repo/cache": "*",
     "@repo/db": "*",
     "@repo/store": "*",
     "@repo/ui": "*",

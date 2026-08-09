@@ -1,5 +1,5 @@
 import { getSession } from "@repo/auth";
-import { PlayCircle } from "lucide-react";
+import { CheckCircle2, PlayCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,27 +8,25 @@ import { PurchaseButton } from "@/components/PurchaseButton";
 
 interface Props {
   params: { courseSlug: string };
+  searchParams: { payment?: string };
 }
 
-export default async function CourseDetailPage({ params }: Props) {
+export default async function CourseDetailPage({ params, searchParams }: Props) {
   const course = await getCourse(params.courseSlug);
   if (!course) notFound();
 
   const session = await getSession();
 
-  // Check if already purchased
   let purchased = false;
   if (session?.user) {
     const purchases = await getUserPurchases();
     purchased = purchases.some((p) => p.courseId === course.id);
   }
 
-  // Find first playable content to link to
   const firstContent = course.content.find(
     (c) => c.content.type === "VIDEO" || c.content.type === "NOTION"
   );
 
-  // Flatten content for the lesson list preview
   const allContent = course.content.flatMap((cc) =>
     cc.content.type === "FOLDER"
       ? cc.content.children.map((child) => ({ ...child, folderTitle: cc.content.title }))
@@ -37,6 +35,22 @@ export default async function CourseDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
+      {/* Payment status banner */}
+      {searchParams.payment === "success" && (
+        <div className="flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300">
+          <CheckCircle2 className="h-5 w-5 shrink-0" />
+          <p className="text-sm font-medium">
+            Payment successful! Your course access has been activated.
+          </p>
+        </div>
+      )}
+      {searchParams.payment === "cancelled" && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-destructive">
+          <XCircle className="h-5 w-5 shrink-0" />
+          <p className="text-sm font-medium">Payment was cancelled. You can try again below.</p>
+        </div>
+      )}
+
       {/* Hero */}
       <div className="overflow-hidden rounded-2xl border bg-card">
         {course.imageUrl && (

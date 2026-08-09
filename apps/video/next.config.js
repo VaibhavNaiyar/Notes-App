@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@repo/ui", "@repo/store", "@repo/auth", "@repo/db"],
+  output: "standalone",
+  transpilePackages: ["@repo/ui", "@repo/store", "@repo/auth", "@repo/db", "@repo/cache"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.notion.so" },
