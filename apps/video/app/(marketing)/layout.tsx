@@ -4,6 +4,7 @@ import NextTopLoader from "nextjs-toploader";
 const NAV_LINKS = [
   { label: "Courses", href: "/" },
   { label: "Profile", href: "/profile" },
+  { label: "Admin", href: "/admin" },
 ];
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
